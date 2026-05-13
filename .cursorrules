@@ -1,0 +1,37 @@
+# Redis-Masterclass Agent Context
+
+This is a TypeScript/Express project focused on Redis integration and Prisma (PostgreSQL).
+
+## Tech Stack
+- **Runtime**: Node.js
+- **Language**: TypeScript
+- **Framework**: Express.js
+- **ORM**: Prisma (PostgreSQL)
+- **Cache**: Redis (ioredis)
+- **Validation**: Zod
+- **Linting**: Biome
+- **Authentication**: JWT, bcrypt
+
+## Project Structure
+- `src/app.ts`: Main entry point.
+- `src/modules/`: Feature-based modules (likely containing routes, controllers).
+- `src/lib/`: Library/Utility instances (e.g., Prisma client, Redis client).
+- `src/config/`: Configuration files.
+- `src/middleware/`: Express middleware.
+- `src/types/`: TypeScript definitions.
+- `prisma/`: Prisma schema and migrations.
+
+## Coding Standards
+- **Validation**: Use Zod for all incoming data.
+- **Tooling**: Use Biome for linting and formatting (`pnpm lint`, `pnpm format`).
+- **Development**: Use `tsx` for running the app (`pnpm dev`).
+
+## Database
+- Uses Prisma with PostgreSQL.
+- Redis is used for caching/session management.
+
+## Rules for AI Agent
+1. **Use Biome** for formatting.
+2. **Type Safety**: Ensure all inputs are validated with Zod.
+3. **Redis usage**: Prefer `ioredis` patterns.
+4. **Prisma**: Use the client from `src/lib/prisma.ts` (assuming standard pattern).
