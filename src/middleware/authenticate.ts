@@ -12,7 +12,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import { AuthService } from "../modules/auth/auth.service.js";
 import { setAuthCookies } from "../lib/cookies.js";
-import redis from "../lib/redis.js";
+import { redis } from "../lib/redis.js";
 import { CacheKeys } from "../lib/cacheKeys.js";
 
 const authService = new AuthService();

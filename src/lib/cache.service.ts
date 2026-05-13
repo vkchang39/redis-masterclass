@@ -3,7 +3,7 @@
 // del(key: string): Promise<void>
 // delMany(keys: string[]): Promise<void>
 
-import redis from "./redis.js";
+import { redis } from "./redis.js";
 
 export class CacheService {
     async get<T>(key: string): Promise<T | null> {

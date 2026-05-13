@@ -1,6 +1,6 @@
 import express from "express";
 import { config } from "./config/env.js";
-import redis from "./lib/redis.js";
+import { redis, publisher, subscriber } from "./lib/redis.js";
 import { prisma } from "./lib/prisma.js";
 import cookieParser from "cookie-parser";
 import { authRouter } from "./modules/auth/auth.routes.js";
@@ -11,36 +11,37 @@ app.use(express.json());
 app.set("trust proxy", 1);
 app.use(cookieParser());
 
-const [redisResult, prismaResult] = await Promise.allSettled([
-    redis.connect(),
-    prisma.$connect(),
-]);
+const getFailureReason = (result: PromiseRejectedResult): string =>
+    result.reason instanceof Error
+        ? result.reason.message
+        : String(result.reason);
 
-if (redisResult.status === "rejected" || prismaResult.status === "rejected") {
-    const failures: string[] = [];
+const [redisResult, prismaResult, publisherResult, subscriberResult] =
+    await Promise.allSettled([
+        redis.connect(),
+        prisma.$connect(),
+        publisher.connect(),
+        subscriber.connect(),
+    ]);
 
-    if (redisResult.status === "rejected") {
-        const redisReason =
-            redisResult.reason instanceof Error
-                ? redisResult.reason.message
-                : String(redisResult.reason);
-        failures.push(`Redis: ${redisReason}`);
-    }
-
-    if (prismaResult.status === "rejected") {
-        const prismaReason =
-            prismaResult.reason instanceof Error
-                ? prismaResult.reason.message
-                : String(prismaResult.reason);
-        failures.push(`Prisma: ${prismaReason}`);
-    }
-
-    console.error(
-        `❌ Failed to connect to required services. ${failures.join(" | ")}`,
+const connections = {
+    redis: redisResult,
+    prisma: prismaResult,
+    publisher: publisherResult,
+    subscriber: subscriberResult,
+};
+const failures = Object.entries(connections)
+    .filter(([_, result]) => result.status === "rejected")
+    .map(
+        ([name, result]) =>
+            `${name}: ${getFailureReason(result as PromiseRejectedResult)}`,
     );
+
+if (failures.length > 0) {
+    console.error(`❌ Failed to connect: ${failures.join(" | ")}`);
     process.exit(1);
 } else {
-    console.log("✅ Database connections established");
+    console.log("✅ All connections established successfully");
 }
 
 app.use("/api/auth", authRouter);

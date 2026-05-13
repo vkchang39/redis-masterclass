@@ -7,7 +7,7 @@ import type { SignOptions } from "jsonwebtoken";
 import { CacheKeys } from "../../lib/cacheKeys.js";
 import { nanoid } from "nanoid";
 import bcrypt from "bcrypt";
-import redis from "../../lib/redis.js";
+import { redis } from "../../lib/redis.js";
 
 export class AuthService {
     private readonly authRepository = new AuthRepository();
