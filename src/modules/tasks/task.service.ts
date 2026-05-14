@@ -4,11 +4,13 @@ import { CacheKeys } from "../../lib/cacheKeys.js";
 import { NotificationService } from "../notifications/notification.service.js";
 import { TaskRepository } from "./task.repository.js";
 import { CreateTaskDto, UpdateTaskDto } from "./task.types.js";
+import { LeaderBoardService } from "../leaderboard/leaderboard.service.js";
 
 export class TaskService {
     private readonly cacheService: CacheService = new CacheService();
     private readonly taskRepository: TaskRepository = new TaskRepository();
     private readonly notificationService = new NotificationService();
+    private readonly leaderboardService = new LeaderBoardService();
 
     async findAll(): Promise<Task[]> {
         const cachedTasks = await this.cacheService.get<Task[]>(
@@ -67,6 +69,9 @@ export class TaskService {
             CacheKeys.tasks.all(),
         ]);
         await this.notificationService.publishTaskEvent("updated", updatedTask);
+        if (task.status === "completed") {
+            await this.leaderboardService.incrementScore(updatedTask.userId);
+        }
         return updatedTask;
     }
 

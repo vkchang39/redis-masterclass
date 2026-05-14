@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { taskRouter } from "./modules/tasks/task.routes.js";
 import { NotificationService } from "./modules/notifications/notification.service.js";
+import { leaderboardRouter } from "./modules/leaderboard/leaderboard.routes.js";
+import { LeaderBoardService } from "./modules/leaderboard/leaderboard.service.js";
 
 const app = express();
 app.use(express.json());
@@ -46,11 +48,17 @@ if (failures.length > 0) {
 }
 
 const notificationService = new NotificationService();
+const leaderboardService = new LeaderBoardService();
+
 await notificationService.initializeSubscribers();
+await leaderboardService.rebuildLeaderBoard();
+
 console.log("✅ Notification subscribers initialized");
+console.log("✅ Leaderboard rebuilt");
 
 app.use("/api/auth", authRouter);
 app.use("/api/tasks", taskRouter);
+app.use("/api/leaderboard", leaderboardRouter);
 
 app.listen(config.PORT, () =>
     console.log(`✅ Server is running on port ${config.PORT}`),
