@@ -1,12 +1,14 @@
 import { Task } from "../../generated/prisma/client.js";
 import { CacheService } from "../../lib/cache.service.js";
 import { CacheKeys } from "../../lib/cacheKeys.js";
+import { NotificationService } from "../notifications/notification.service.js";
 import { TaskRepository } from "./task.repository.js";
 import { CreateTaskDto, UpdateTaskDto } from "./task.types.js";
 
 export class TaskService {
     private readonly cacheService: CacheService = new CacheService();
     private readonly taskRepository: TaskRepository = new TaskRepository();
+    private readonly notificationService = new NotificationService();
 
     async findAll(): Promise<Task[]> {
         const cachedTasks = await this.cacheService.get<Task[]>(
@@ -53,6 +55,7 @@ export class TaskService {
             CacheKeys.tasks.all(),
             CacheKeys.tasks.byUser(newTask.userId),
         ]);
+        await this.notificationService.publishTaskEvent("created", newTask);
         return newTask;
     }
 
@@ -63,6 +66,7 @@ export class TaskService {
             CacheKeys.tasks.byUser(updatedTask.userId),
             CacheKeys.tasks.all(),
         ]);
+        await this.notificationService.publishTaskEvent("updated", updatedTask);
         return updatedTask;
     }
 
@@ -73,6 +77,7 @@ export class TaskService {
             CacheKeys.tasks.byUser(deletedTask.userId),
             CacheKeys.tasks.all(),
         ]);
+        await this.notificationService.publishTaskEvent("deleted", deletedTask);
         return deletedTask;
     }
 }

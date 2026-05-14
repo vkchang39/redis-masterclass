@@ -18,7 +18,13 @@ import { nanoid } from "nanoid";
 import { setAuthCookies } from "../../lib/cookies.js";
 
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(private readonly authService: AuthService) {
+        this.register = this.register.bind(this);
+        this.login = this.login.bind(this);
+        this.refresh = this.refresh.bind(this);
+        this.logout = this.logout.bind(this);
+        this.logoutAll = this.logoutAll.bind(this);
+    }
     private getDeviceContext(req: Request): DeviceContext {
         const deviceId = req.cookies.deviceId ?? nanoid();
         const userAgent = req.headers["user-agent"];

@@ -5,6 +5,7 @@ import { prisma } from "./lib/prisma.js";
 import cookieParser from "cookie-parser";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { taskRouter } from "./modules/tasks/task.routes.js";
+import { NotificationService } from "./modules/notifications/notification.service.js";
 
 const app = express();
 app.use(express.json());
@@ -43,6 +44,10 @@ if (failures.length > 0) {
 } else {
     console.log("✅ All connections established successfully");
 }
+
+const notificationService = new NotificationService();
+await notificationService.initializeSubscribers();
+console.log("✅ Notification subscribers initialized");
 
 app.use("/api/auth", authRouter);
 app.use("/api/tasks", taskRouter);

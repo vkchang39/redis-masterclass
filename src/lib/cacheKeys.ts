@@ -9,4 +9,8 @@ export const CacheKeys = {
         userSessions: (userId: string) => `auth:sessions:${userId}`,
         user: (userId: string) => `auth:user:${userId}`,
     },
+    leaderboard: {
+        global: () => "leaderboard:global",
+        user: (userId: string) => `leaderboard:user:${userId}`,
+    },
 } as const;
