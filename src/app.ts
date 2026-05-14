@@ -8,6 +8,7 @@ import { taskRouter } from "./modules/tasks/task.routes.js";
 import { NotificationService } from "./modules/notifications/notification.service.js";
 import { leaderboardRouter } from "./modules/leaderboard/leaderboard.routes.js";
 import { LeaderBoardService } from "./modules/leaderboard/leaderboard.service.js";
+import { RateLimiterFactory } from "./middleware/rateLimiter.js";
 
 const app = express();
 app.use(express.json());
@@ -55,6 +56,8 @@ await leaderboardService.rebuildLeaderBoard();
 
 console.log("✅ Notification subscribers initialized");
 console.log("✅ Leaderboard rebuilt");
+
+app.use(RateLimiterFactory.create({ windowMs: 15 * 60 * 1000, max: 100 }));
 
 app.use("/api/auth", authRouter);
 app.use("/api/tasks", taskRouter);
