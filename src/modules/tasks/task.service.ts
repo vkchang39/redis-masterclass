@@ -1,16 +1,33 @@
-import { Task } from "../../generated/prisma/client.js";
+import { Task, User } from "../../generated/prisma/client.js";
 import { CacheService } from "../../lib/cache.service.js";
 import { CacheKeys } from "../../lib/cacheKeys.js";
 import { NotificationService } from "../notifications/notification.service.js";
 import { TaskRepository } from "./task.repository.js";
 import { CreateTaskDto, UpdateTaskDto } from "./task.types.js";
 import { LeaderBoardService } from "../leaderboard/leaderboard.service.js";
+import { emailQueue, notificationQueue } from "../../jobs/queue.js";
+import { prisma } from "../../lib/prisma.js";
 
 export class TaskService {
     private readonly cacheService: CacheService = new CacheService();
     private readonly taskRepository: TaskRepository = new TaskRepository();
     private readonly notificationService = new NotificationService();
     private readonly leaderboardService = new LeaderBoardService();
+
+    private async getUserEmail(userId: string): Promise<string | undefined> {
+        const cachedUser = await this.cacheService.get<User>(
+            CacheKeys.auth.user(userId),
+        );
+        return (
+            cachedUser?.email ??
+            (
+                await prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { email: true },
+                })
+            )?.email
+        );
+    }
 
     async findAll(): Promise<Task[]> {
         const cachedTasks = await this.cacheService.get<Task[]>(
@@ -58,6 +75,16 @@ export class TaskService {
             CacheKeys.tasks.byUser(newTask.userId),
         ]);
         await this.notificationService.publishTaskEvent("created", newTask);
+        const userEmail = await this.getUserEmail(newTask.userId);
+
+        await emailQueue.add("task-created", {
+            email: userEmail,
+            task: newTask,
+        });
+        await notificationQueue.add("task-created", {
+            userId: newTask.userId,
+            data: newTask,
+        });
         return newTask;
     }
 
@@ -72,6 +99,15 @@ export class TaskService {
         if (task.status === "completed") {
             await this.leaderboardService.incrementScore(updatedTask.userId);
         }
+        const userEmail = await this.getUserEmail(updatedTask.userId);
+        await emailQueue.add("task-updated", {
+            email: userEmail,
+            task: updatedTask,
+        });
+        await notificationQueue.add("task-updated", {
+            userId: updatedTask.userId,
+            data: updatedTask,
+        });
         return updatedTask;
     }
 
@@ -83,6 +119,15 @@ export class TaskService {
             CacheKeys.tasks.all(),
         ]);
         await this.notificationService.publishTaskEvent("deleted", deletedTask);
+        const userEmail = await this.getUserEmail(deletedTask.userId);
+        await emailQueue.add("task-deleted", {
+            email: userEmail,
+            task: deletedTask,
+        });
+        await notificationQueue.add("task-deleted", {
+            userId: deletedTask.userId,
+            data: deletedTask,
+        });
         return deletedTask;
     }
 }
